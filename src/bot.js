@@ -18,7 +18,27 @@ const log = console.log
 
 // Logging-in the bot to discord
 client.on('ready', () => {
-  log(`Logged in as ${client.user.username}!`)
+  log(`Logged in as ${chalk.blue(client.user.tag)}!`)
+
+  // Set the presence of the bot
+  client.user
+    .setPresence({
+      activity: {
+        name: '!command',
+        type: 'LISTENING'
+      },
+      status: 'online'
+    })
+    .then(() =>
+      log(
+        `Presence - ${
+          client.user.presence.status
+        } & ${client.user.presence.activities[0].type.toLowerCase()} to ${
+          client.user.presence.activities[0].name
+        }`
+      )
+    )
+    .catch(console.error)
 })
 
 client.on('message', (message) => {
@@ -31,9 +51,9 @@ client.on('message', (message) => {
       .send('Server unavailable at the moment!')
       .then(() =>
         log(
-          `${chalk.bgYellow('Alert')} - Server unavailable sent to ${
-            message.author.username
-          }`
+          `${chalk.yellow('Alert')} - Server unavailable - ${chalk.green(
+            message.author.tag
+          )}`
         )
       )
       .catch(console.error)
@@ -44,12 +64,14 @@ client.on('message', (message) => {
     // Checks if the message starts with a '!' prefix in the wrong text channel
     if (message.content.charAt(0) === PREFIX) {
       return message
-        .reply('Hey, Use this command on the #immortal-bot text channel!')
+        .reply('Use this command on the #immortal-bot text channel!')
         .then(() =>
           log(
-            `${chalk.bgBlue('Message')} - Redirect to text channel to ${
-              message.author.username
-            }`
+            `${chalk.blue(
+              'Prompt'
+            )} - Use the right text channel - ${chalk.green(
+              message.author.tag
+            )}`
           )
         )
         .catch(console.error)
@@ -60,17 +82,54 @@ client.on('message', (message) => {
 
     // Checks if the command starts with a '!' prefix
     if (command.startsWith(PREFIX)) {
-      // Kick a member from an active voice channel
-      if (command === '!kick' || command === '!disconnect') {
-        // Checks if author has permission to kick/disconnect
+      if (command === '!command') {
+        // Listing all commands
+        return message
+          .reply(
+            'Available commands are !kick, !mute, !unmute, !deafen, !undeafen'
+          )
+          .then(() =>
+            log(
+              `${chalk.yellow(
+                'Alert'
+              )} - Listing available commands - ${chalk.green(
+                message.author.tag
+              )}`
+            )
+          )
+          .catch(console.error)
+      } else if (command === '!kick') {
+        // Kick a member from an active voice channel
+
+        // Checks if author has permission to kick
         if (!message.member.hasPermission('ADMINISTRATOR')) {
           return message
-            .reply('You do not have permission to kick/disconnect the user.')
+            .reply(
+              'You do not have permissions to kick users. Request the admin for permissions'
+            )
             .then(() =>
               log(
-                `${chalk.bgRed(
+                `${chalk.red(
                   'Kick'
-                )} - Author does not have permission to kick/disconnect`
+                )} - You do not have permissions to kick - ${chalk.green(
+                  message.author.tag
+                )}`
+              )
+            )
+            .catch(console.error)
+        } else if (!message.guild.me.hasPermission('ADMINISTRATOR')) {
+          // Checks if the bot has permissions to kick
+          return message
+            .reply(
+              'I do not have permissions to kick the user. You can enable permissions in the server settings.'
+            )
+            .then(() =>
+              log(
+                `${chalk.red('Kick')} - ${chalk.blue(
+                  client.user.tag
+                )} does not have permissions to kick - ${chalk.green(
+                  message.author.tag
+                )}`
               )
             )
             .catch(console.error)
@@ -79,8 +138,14 @@ client.on('message', (message) => {
         // Checks if member has not been mentioned
         if (args.length === 0) {
           return message
-            .reply('Whom should I kick/disconnect?')
-            .then(() => log(`${chalk.bgRed('Kick')} - User not mentioned`))
+            .reply('Whom should I kick?')
+            .then(() =>
+              log(
+                `${chalk.red('Kick')} - User not mentioned - ${chalk.green(
+                  message.author.tag
+                )}`
+              )
+            )
             .catch(console.error)
         }
 
@@ -95,8 +160,15 @@ client.on('message', (message) => {
             return member.voice
               .kick()
               .then(() =>
+                message.channel.send(
+                  `${member} has been kicked from the voice channel!`
+                )
+              )
+              .then(() =>
                 log(
-                  `${chalk.bgRed('Kick')} - User has been kicked/disconnected`
+                  `${chalk.red('Kick')} - ${chalk.magenta(
+                    member.user.tag
+                  )} has been kicked - ${chalk.green(message.author.tag)}`
                 )
               )
               .catch(console.error)
@@ -107,9 +179,11 @@ client.on('message', (message) => {
               )
               .then(() =>
                 log(
-                  `${chalk.bgRed(
-                    'Kick'
-                  )} - User not connected to any voice channel`
+                  `${chalk.red('Kick')} - ${chalk.magenta(
+                    member.user.tag
+                  )} is not connected to any voice channel - ${chalk.green(
+                    message.author.tag
+                  )}`
                 )
               )
               .catch(console.error)
@@ -117,7 +191,13 @@ client.on('message', (message) => {
         } else {
           return message
             .reply('Invalid user name.')
-            .then(() => log(`${chalk.bgRed('Kick')} - Invalid username`))
+            .then(() =>
+              log(
+                `${chalk.red('Kick')} - Invalid username - ${chalk.green(
+                  message.author.tag
+                )}`
+              )
+            )
             .catch(console.error)
         }
       } else if (command === '!mute') {
@@ -126,12 +206,32 @@ client.on('message', (message) => {
         // Checks if author has permission to mute
         if (!message.member.hasPermission('MUTE_MEMBERS')) {
           return message
-            .reply('You do not have permission to mute the user.')
+            .reply(
+              'You do not have permissions to mute users. Request the admin for permissions'
+            )
             .then(() =>
               log(
-                `${chalk.bgRed(
-                  'Kick'
-                )} - Author does not have permission to mute`
+                `${chalk.red(
+                  'Mute'
+                )} - You do not have permissions to mute - ${chalk.green(
+                  message.author.tag
+                )}`
+              )
+            )
+            .catch(console.error)
+        } else if (!message.guild.me.hasPermission('MUTE_MEMBERS')) {
+          // Checks if the bot has permissions to mute
+          return message
+            .reply(
+              'I do not have permissions to mute the user. You can enable permissions in the server settings.'
+            )
+            .then(() =>
+              log(
+                `${chalk.red('Mute')} - ${chalk.blue(
+                  client.user.tag
+                )} does not have permissions to mute - ${chalk.green(
+                  message.author.tag
+                )}`
               )
             )
             .catch(console.error)
@@ -140,7 +240,13 @@ client.on('message', (message) => {
         if (args.length === 0) {
           return message
             .reply('Whom should I mute?')
-            .then(() => log(`${chalk.bgRed('Mute')} - User not mentioned`))
+            .then(() =>
+              log(
+                `${chalk.red('Mute')} - User not mentioned - ${chalk.green(
+                  message.author.tag
+                )}`
+              )
+            )
             .catch(console.error)
         }
 
@@ -156,13 +262,28 @@ client.on('message', (message) => {
             if (!member.voice.serverMute) {
               return member.voice
                 .setMute(true)
-                .then(() => log(`${chalk.bgRed('Mute')} - User has been muted`))
+                .then(() =>
+                  message.channel.send(
+                    `${member} has been muted in all voice channels!`
+                  )
+                )
+                .then(() =>
+                  log(
+                    `${chalk.red('Mute')} - ${chalk.magenta(
+                      member.user.tag
+                    )} has been muted - ${chalk.green(message.author.tag)}`
+                  )
+                )
                 .catch(console.error)
             } else {
               return message
                 .reply(`${member.user.username} is already muted.`)
                 .then(() =>
-                  log(`${chalk.bgRed('Mute')} - User is already muted`)
+                  log(
+                    `${chalk.red('Mute')} - ${chalk.magenta(
+                      member.user.tag
+                    )} is already muted - ${chalk.green(message.author.tag)}`
+                  )
                 )
                 .catch(console.error)
             }
@@ -173,9 +294,11 @@ client.on('message', (message) => {
               )
               .then(() =>
                 log(
-                  `${chalk.bgRed(
-                    'Mute'
-                  )} - User not connected to any voice channel`
+                  `${chalk.red('Mute')} - ${chalk.magenta(
+                    member.user.tag
+                  )} is not connected to any voice channel - ${chalk.green(
+                    message.author.tag
+                  )}`
                 )
               )
               .catch(console.error)
@@ -183,7 +306,13 @@ client.on('message', (message) => {
         } else {
           return message
             .reply('Invalid user name.')
-            .then(() => log(`${chalk.bgRed('Mute')} - Invalid username`))
+            .then(() =>
+              log(
+                `${chalk.red('Mute')} - Invalid username - ${chalk.green(
+                  message.author.tag
+                )}`
+              )
+            )
             .catch(console.error)
         }
       } else if (command === '!unmute') {
@@ -192,12 +321,32 @@ client.on('message', (message) => {
         // Checks if author has permission to unmute
         if (!message.member.hasPermission('MUTE_MEMBERS')) {
           return message
-            .reply('You do not have permission to unmute the user.')
+            .reply(
+              'You do not have permissions to unmute users. Request the admin for permissions'
+            )
             .then(() =>
               log(
-                `${chalk.bgRed(
-                  'Kick'
-                )} - Author does not have permission to mute`
+                `${chalk.red(
+                  'Unmte'
+                )} - You do not have permissions to unmute - ${chalk.green(
+                  message.author.tag
+                )}`
+              )
+            )
+            .catch(console.error)
+        } else if (!message.guild.me.hasPermission('MUTE_MEMBERS')) {
+          // Checks if the bot has permissions to unmute
+          return message
+            .reply(
+              'I do not have permissions to unmute the user. You can enable permissions in the server settings.'
+            )
+            .then(() =>
+              log(
+                `${chalk.red('Unmute')} - ${chalk.blue(
+                  client.user.tag
+                )} does not have permissions to unmute - ${chalk.green(
+                  message.author.tag
+                )}`
               )
             )
             .catch(console.error)
@@ -206,7 +355,13 @@ client.on('message', (message) => {
         if (args.length === 0) {
           return message
             .reply('Whom should I unmute?')
-            .then(() => log(`${chalk.bgRed('Unmute')} - User not mentioned`))
+            .then(() =>
+              log(
+                `${chalk.red('Unmute')} - User not mentioned - ${chalk.green(
+                  message.author.tag
+                )}`
+              )
+            )
             .catch(console.error)
         }
 
@@ -223,14 +378,27 @@ client.on('message', (message) => {
               return member.voice
                 .setMute(false)
                 .then(() =>
-                  log(`${chalk.bgRed('Unmute')} - User has been unmuted`)
+                  message.channel.send(
+                    `${member} has been unmuted in all voice channels!`
+                  )
+                )
+                .then(() =>
+                  log(
+                    `${chalk.red('Unmute')} - ${chalk.magenta(
+                      member.user.tag
+                    )} has been unmuted - ${chalk.green(message.author.tag)}`
+                  )
                 )
                 .catch(console.error)
             } else {
               return message
                 .reply(`${member.user.username} is already unmuted.`)
                 .then(() =>
-                  log(`${chalk.bgRed('Unmute')} - User is already unmuted`)
+                  log(
+                    `${chalk.red('Unmute')} - ${chalk.magenta(
+                      member.user.tag
+                    )} is already unmuted - ${chalk.green(message.author.tag)}`
+                  )
                 )
                 .catch(console.error)
             }
@@ -241,9 +409,11 @@ client.on('message', (message) => {
               )
               .then(() =>
                 log(
-                  `${chalk.bgRed(
-                    'Unmute'
-                  )} - User not connected to any voice channel`
+                  `${chalk.red('Unmute')} - ${chalk.magenta(
+                    member.user.tag
+                  )} is not connected to any voice channel - ${chalk.green(
+                    message.author.tag
+                  )}`
                 )
               )
               .catch(console.error)
@@ -251,7 +421,13 @@ client.on('message', (message) => {
         } else {
           return message
             .reply('Invalid user name.')
-            .then(() => log(`${chalk.bgRed('Unmute')} - Invalid username`))
+            .then(() =>
+              log(
+                `${chalk.red('Unmute')} - Invalid username - ${chalk.green(
+                  message.author.tag
+                )}`
+              )
+            )
             .catch(console.error)
         }
       } else if (command === '!deafen') {
@@ -260,12 +436,32 @@ client.on('message', (message) => {
         // Checks if author has permission to deafen
         if (!message.member.hasPermission('DEAFEN_MEMBERS')) {
           return message
-            .reply('You do not have permission to deafen the user.')
+            .reply(
+              'You do not have permissions to deafen users. Request the admin for permissions'
+            )
             .then(() =>
               log(
-                `${chalk.bgRed(
-                  'Kick'
-                )} - Author does not have permission to deafen`
+                `${chalk.red(
+                  'Deafen'
+                )} - You do not have permissions to deafen - ${chalk.green(
+                  message.author.tag
+                )}`
+              )
+            )
+            .catch(console.error)
+        } else if (!message.guild.me.hasPermission('DEAFEN_MEMBERS')) {
+          // Checks if the bot has permissions to deafen
+          return message
+            .reply(
+              'I do not have permissions to deafen the user. You can enable permissions in the server settings.'
+            )
+            .then(() =>
+              log(
+                `${chalk.red('Deafen')} - ${chalk.blue(
+                  client.user.tag
+                )} does not have permissions to deafen - ${chalk.green(
+                  message.author.tag
+                )}`
               )
             )
             .catch(console.error)
@@ -274,7 +470,13 @@ client.on('message', (message) => {
         if (args.length === 0) {
           return message
             .reply('Whom should I deafen?')
-            .then(() => log(`${chalk.bgRed('Deafen')} - User not mentioned`))
+            .then(() =>
+              log(
+                `${chalk.red('Deafen')} - User not mentioned - ${chalk.green(
+                  message.author.tag
+                )}`
+              )
+            )
             .catch(console.error)
         }
 
@@ -291,14 +493,27 @@ client.on('message', (message) => {
               return member.voice
                 .setDeaf(true)
                 .then(() =>
-                  log(`${chalk.bgRed('Deafen')} - User has been deafened`)
+                  message.channel.send(
+                    `${member} has been deafened in all voice channels!`
+                  )
+                )
+                .then(() =>
+                  log(
+                    `${chalk.red('Deafen')} - ${chalk.magenta(
+                      member.user.tag
+                    )} has been deafened - ${chalk.green(message.author.tag)}`
+                  )
                 )
                 .catch(console.error)
             } else {
               return message
                 .reply(`${member.user.username} is already deafened.`)
                 .then(() =>
-                  log(`${chalk.bgRed('Deafen')} - User is already deafened`)
+                  log(
+                    `${chalk.red('Deafen')} - ${chalk.magenta(
+                      member.user.tag
+                    )} is already deafened - ${chalk.green(message.author.tag)}`
+                  )
                 )
                 .catch(console.error)
             }
@@ -309,9 +524,11 @@ client.on('message', (message) => {
               )
               .then(() =>
                 log(
-                  `${chalk.bgRed(
-                    'Deafen'
-                  )} - User not connected to any voice channel`
+                  `${chalk.red('Deafen')} - ${chalk.magenta(
+                    member.user.tag
+                  )} is not connected to any voice channel - ${chalk.green(
+                    message.author.tag
+                  )}`
                 )
               )
               .catch(console.error)
@@ -319,7 +536,13 @@ client.on('message', (message) => {
         } else {
           return message
             .reply('Invalid user name.')
-            .then(() => log(`${chalk.bgRed('Deafen')} - Invalid username`))
+            .then(() =>
+              log(
+                `${chalk.red('Deafen')} - Invalid username - ${chalk.green(
+                  message.author.tag
+                )}`
+              )
+            )
             .catch(console.error)
         }
       } else if (command === '!undeafen') {
@@ -328,12 +551,32 @@ client.on('message', (message) => {
         // Checks if author has permission to undeafen
         if (!message.member.hasPermission('DEAFEN_MEMBERS')) {
           return message
-            .reply('You do not have permission to undeafen the user.')
+            .reply(
+              'You do not have permissions to undeafen users. Request the admin for permissions'
+            )
             .then(() =>
               log(
-                `${chalk.bgRed(
-                  'Kick'
-                )} - Author does not have permission to undeafen`
+                `${chalk.red(
+                  'Undeafen'
+                )} - You do not have permissions to undeafen - ${chalk.green(
+                  message.author.tag
+                )}`
+              )
+            )
+            .catch(console.error)
+        } else if (!message.guild.me.hasPermission('DEAFEN_MEMBERS')) {
+          // Checks if the bot has permissions to undeafen
+          return message
+            .reply(
+              'I do not have permissions to undeafen the user. You can enable permissions in the server settings.'
+            )
+            .then(() =>
+              log(
+                `${chalk.red('Undeafen')} - ${chalk.blue(
+                  client.user.tag
+                )} does not have permissions to undeafen - ${chalk.green(
+                  message.author.tag
+                )}`
               )
             )
             .catch(console.error)
@@ -342,7 +585,13 @@ client.on('message', (message) => {
         if (args.length === 0) {
           return message
             .reply('Whom should I undeafen?')
-            .then(() => log(`${chalk.bgRed('Undeafen')} - User not mentioned`))
+            .then(() =>
+              log(
+                `${chalk.red('Undeafen')} - User not mentioned - ${chalk.green(
+                  message.author.tag
+                )}`
+              )
+            )
             .catch(console.error)
         }
 
@@ -359,14 +608,29 @@ client.on('message', (message) => {
               return member.voice
                 .setDeaf(false)
                 .then(() =>
-                  log(`${chalk.bgRed('Undeafen')} - User has been undeafen`)
+                  message.channel.send(
+                    `${member} has been undeafened in all voice channels!`
+                  )
+                )
+                .then(() =>
+                  log(
+                    `${chalk.red('Undeafen')} - ${chalk.magenta(
+                      member.user.tag
+                    )} has been undeafened - ${chalk.green(message.author.tag)}`
+                  )
                 )
                 .catch(console.error)
             } else {
               return message
-                .reply(`${member.user.username} is already Undeafen.`)
+                .reply(`${member.user.username} is already undeafened.`)
                 .then(() =>
-                  log(`${chalk.bgRed('Undeafen')} - User is already Undeafen`)
+                  log(
+                    `${chalk.red('Undeafen')} - ${chalk.magenta(
+                      member.user.tag
+                    )} is already undeafened - ${chalk.green(
+                      message.author.tag
+                    )}`
+                  )
                 )
                 .catch(console.error)
             }
@@ -377,9 +641,11 @@ client.on('message', (message) => {
               )
               .then(() =>
                 log(
-                  `${chalk.bgRed(
-                    'Undeafen'
-                  )} - User not connected to any voice channel`
+                  `${chalk.red('Undeafen')} - ${chalk.magenta(
+                    member.user.tag
+                  )} is not connected to any voice channel - ${chalk.green(
+                    message.author.tag
+                  )}`
                 )
               )
               .catch(console.error)
@@ -387,21 +653,39 @@ client.on('message', (message) => {
         } else {
           return message
             .reply('Invalid user name.')
-            .then(() => log(`${chalk.bgRed('Undeafen')} - Invalid username`))
+            .then(() =>
+              log(
+                `${chalk.red('Undeafen')} - Invalid username - ${chalk.green(
+                  message.author.tag
+                )}`
+              )
+            )
             .catch(console.error)
         }
       } else {
         return message
           .reply(
-            'Invalid command. Available commands are !kick/!disconnect, !mute, !unmute, !deafen or !undeafen.'
+            'Invalid command. Available commands are !kick, !mute, !unmute, !deafen or !undeafen.'
           )
-          .then(() => log(`${chalk.bgYellow('Alert')} - Invalid command`))
+          .then(() =>
+            log(
+              `${chalk.yellow('Alert')} - Invalid command - ${chalk.green(
+                message.author.tag
+              )}`
+            )
+          )
           .catch(console.error)
       }
     } else {
       return message
         .reply("Use the '!' prefix to issue commands.")
-        .then(() => log(`${chalk.bgYellow('Alert')} - '!' prefix required`))
+        .then(() =>
+          log(
+            `${chalk.yellow('Alert')} - '!' prefix required - ${chalk.green(
+              message.author.tag
+            )}`
+          )
+        )
         .catch(console.error)
     }
   }
