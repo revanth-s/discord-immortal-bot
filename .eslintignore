@@ -1,0 +1,17 @@
+# Ignore build directories
+dist/
+node_modules/
+
+# Ignore specific files or patterns
+*.min.js
+*.bundle.js
+
+# Ignore coverage directory
+coverage/
+
+# Ignore configuration files (optional, based on project needs)
+jest.config.js
+prettier.config.js
+
+# System files
+.DS_Store

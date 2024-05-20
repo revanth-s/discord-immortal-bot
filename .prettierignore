@@ -1,0 +1,19 @@
+# Ignore build directories
+dist/
+
+# Ignore node_modules
+node_modules/
+
+# Ignore specific files or patterns
+*.min.js
+*.bundle.js
+
+# Ignore all configuration files
+*.config.js
+
+# Ignore coverage directory (if you're using a test coverage tool)
+coverage/
+
+# Ignore lock files
+package-lock.json
+yarn.lock
