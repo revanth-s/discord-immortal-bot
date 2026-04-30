@@ -1,252 +1,98 @@
-// Discord lingo used here
-// author - sender of the message
-// user - user in discord (not necessarily a part of a server)
-// member - user in discord & a member in a server
-// guild - alias for server
-
 import dotenv from 'dotenv';
 import chalk from 'chalk';
-import { Client } from 'discord.js';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { Client, GatewayIntentBits, Collection } from 'discord.js';
+import { logger } from './utils/logger.js';
+import { Command } from './types/command.js';
 
 dotenv.config();
 
-const client = new Client({
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Extend the client class to include a commands collection
+class MyClient extends Client {
+  commands: Collection<string, Command>;
+
+  constructor(options: any) {
+    super(options);
+    this.commands = new Collection();
+  }
+}
+
+const client = new MyClient({
   intents: [
-    'GUILDS',
-    // 'GUILD_MEMBERS',
-    // 'GUILD_BANS',
-    'GUILD_EMOJIS_AND_STICKERS',
-    // 'GUILD_INTEGRATIONS',
-    // 'GUILD_WEBHOOKS',
-    // 'GUILD_INVITES',
-    'GUILD_VOICE_STATES',
-    // 'GUILD_PRESENCES',
-    'GUILD_MESSAGES',
-    'GUILD_MESSAGE_REACTIONS',
-    'GUILD_MESSAGE_TYPING',
-    // 'DIRECT_MESSAGES',
-    // 'DIRECT_MESSAGE_REACTIONS',
-    // 'DIRECT_MESSAGE_TYPING'
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildEmojisAndStickers,
+    GatewayIntentBits.GuildVoiceStates,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.GuildMessageReactions,
+    GatewayIntentBits.GuildMessageTyping,
   ],
 });
 
-// Function - Logging template
-const log = (commandName, receiver, message, sender, guild) => {
-  let currentDateTime = String(new Date());
-  currentDateTime = currentDateTime.slice(0, 33);
+// Load Commands dynamically
+const loadCommands = async () => {
+  const foldersPath = path.join(__dirname, 'commands');
+  const commandFolders = fs.readdirSync(foldersPath);
 
-  console.log(
-    `${currentDateTime} | ${chalk.red(commandName)} | ${chalk.magenta(
-      receiver,
-    )} ${message} | ${chalk.green(sender)} on ${chalk.cyan(guild)}`,
-  );
-};
-
-// Function - Checks if user and bot have permissions
-const hasPermission = (interaction, commandName, user, permission) => {
-  if (!interaction.memberPermissions.has(permission)) {
-    // Checks if user has permissions
-    interaction.reply(
-      `You do not have permissions to ${commandName} members. Request the admin for permissions.`,
-    );
-    log(
-      commandName,
-      user.displayName,
-      `can not be ${commandName}ed. The user does not have permissions`,
-      interaction.member.displayName,
-      user.guild.name,
-    );
-    return false;
-  }
-  else if (!interaction.guild.me.permissions.has('ADMINISTRATOR')) {
-    // Checks if the bot has permissions
-    interaction.reply(
-      `I do not have permissions to ${commandName} members. You can enable permissions in the server settings.`,
-    );
-    log(
-      commandName,
-      user.displayName,
-      `can not be ${commandName}ed. ${interaction.guild.me.displayName} does not have permissions`,
-      interaction.member.displayName,
-      user.guild.name,
-    );
-    return false;
-  }
-  return true;
-};
-
-// Function - Checks if member is connected to voice
-const isConnected = (interaction, commandName, user) => {
-  if (user.voice.channel) {
-    return true;
-  }
-  else {
-    interaction.reply(`${user} is not connected to any voice channel.`);
-    log(
-      commandName,
-      user.displayName,
-      'is not connected to any voice channel',
-      interaction.member.displayName,
-      user.guild.name,
-    );
-    return false;
+  for (const folder of commandFolders) {
+    const commandsPath = path.join(foldersPath, folder);
+    const commandFiles = fs
+      .readdirSync(commandsPath)
+      .filter((file) => file.endsWith('.ts') || file.endsWith('.js'));
+    for (const file of commandFiles) {
+      const filePath = path.join(commandsPath, file);
+      // use dynamic import with file:// protocol for ES Modules in windows/linux compatibility
+      const { command } = await import(`file://${filePath}`);
+      if ('data' in command && 'execute' in command) {
+        client.commands.set(command.data.name, command);
+      } else {
+        logger.warn(
+          `The command at ${filePath} is missing a required "data" or "execute" property.`,
+        );
+      }
+    }
   }
 };
 
-// Logging in the bot to discord
-client.login(process.env.DISCORDJS_BOT_TOKEN);
-
-// Event - checks if the bot is ready
 client.once('ready', () => {
-  console.log(`Logged in as ${chalk.blue(client.user.username)}`);
+  logger.info(`Logged in as ${chalk.blue(client.user?.username)}`);
 });
 
-// Event - Checks if an interaction was sent in the server
 client.on('interactionCreate', async (interaction) => {
-  if (!interaction.isCommand()) return;
+  if (!interaction.isChatInputCommand()) return;
 
-  const { commandName } = interaction;
-  const user = interaction.options.getMember('user');
+  const command = client.commands.get(interaction.commandName);
 
-  if (commandName === 'disconnect') {
-    // Check permissions for disconnect
-    if (!hasPermission(interaction, commandName, user, 'ADMINISTRATOR')) return;
-
-    // Check if user is conneted to voice
-    if (!isConnected(interaction, commandName, user)) return;
-
-    await user.voice.disconnect();
-    await interaction.reply(
-      `${user} has been disconnected from the voice channel.`,
-    );
-    log(
-      commandName,
-      user.displayName,
-      'has been disconnected from the voice channel',
-      interaction.member.displayName,
-      user.guild.name,
-    );
+  if (!command) {
+    logger.error(`No command matching ${interaction.commandName} was found.`);
+    return;
   }
-  else if (commandName === 'mute') {
-    // Check permissions for mute
-    if (!hasPermission(interaction, commandName, user, 'MUTE_MEMBERS')) return;
 
-    // Check if user is conneted to voice
-    if (!isConnected(interaction, commandName, user)) return;
-
-    if (!user.voice.serverMute) {
-      await user.voice.setMute(true);
-      await interaction.reply(`${user} has been muted from the voice channel.`);
-      log(
-        commandName,
-        user.displayName,
-        'has been muted from the voice channel',
-        interaction.member.displayName,
-        user.guild.name,
-      );
-    }
-    else {
-      await interaction.reply(`${user} is already muted.`);
-      log(
-        commandName,
-        user.displayName,
-        'is already muted',
-        interaction.member.displayName,
-        user.guild.name,
-      );
-    }
-  }
-  else if (commandName === 'unmute') {
-    // Check permissions for unmute
-    if (!hasPermission(interaction, commandName, user, 'MUTE_MEMBERS')) return;
-
-    // Check if user is conneted to voice
-    if (!isConnected(interaction, commandName, user)) return;
-
-    if (user.voice.serverMute) {
-      await user.voice.setMute(false);
-      await interaction.reply(
-        `${user} has been unmuted from the voice channel.`,
-      );
-      log(
-        commandName,
-        user.displayName,
-        'has been unmuted from the voice channel',
-        interaction.member.displayName,
-        user.guild.name,
-      );
-    }
-    else {
-      await interaction.reply(`${user} is already unmuted.`);
-      log(
-        commandName,
-        user.displayName,
-        'is already unmuted',
-        interaction.member.displayName,
-        user.guild.name,
-      );
-    }
-  }
-  else if (commandName === 'deafen') {
-    // Check permissions for deafen
-    if (!hasPermission(interaction, commandName, user, 'DEAFEN_MEMBERS')) return;
-
-    // Check if user is conneted to voice
-    if (!isConnected(interaction, commandName, user)) return;
-
-    if (!user.voice.serverDeaf) {
-      await user.voice.setDeaf(true);
-      await interaction.reply(
-        `${user} has been deafened from the voice channel.`,
-      );
-      log(
-        commandName,
-        user.displayName,
-        'has been deafened from the voice channel',
-        interaction.member.displayName,
-        user.guild.name,
-      );
-    }
-    else {
-      await interaction.reply(`${user} is already deafened.`);
-      log(
-        commandName,
-        user.displayName,
-        'is already deafened',
-        interaction.member.displayName,
-        user.guild.name,
-      );
-    }
-  }
-  else if (commandName === 'undeafen') {
-    // Check permissions for undeafen
-    if (!hasPermission(interaction, commandName, user, 'DEAFEN_MEMBERS')) return;
-
-    // Check if user is conneted to voice
-    if (!isConnected(interaction, commandName, user)) return;
-
-    if (user.voice.serverDeaf) {
-      await user.voice.setDeaf(false);
-      await interaction.reply(
-        `${user} has been undeafened from the voice channel.`,
-      );
-      log(
-        commandName,
-        user.displayName,
-        'has been undeafened from the voice channel',
-        interaction.member.displayName,
-        user.guild.name,
-      );
-    }
-    else {
-      await interaction.reply(`${user} is already undeafened.`);
-      log(
-        commandName,
-        user.displayName,
-        'is already undeafened',
-        interaction.member.displayName,
-        user.guild.name,
-      );
+  try {
+    await command.execute(interaction);
+  } catch (error) {
+    logger.error(error);
+    if (interaction.replied || interaction.deferred) {
+      await interaction.followUp({
+        content: 'There was an error while executing this command!',
+        ephemeral: true,
+      });
+    } else {
+      await interaction.reply({
+        content: 'There was an error while executing this command!',
+        ephemeral: true,
+      });
     }
   }
 });
+
+const start = async () => {
+  await loadCommands();
+  await client.login(process.env.DISCORDJS_BOT_TOKEN);
+};
+
+start();
