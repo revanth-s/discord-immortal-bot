@@ -1,9 +1,9 @@
-import { SlashCommandBuilder } from '@discordjs/builders'
-import { REST } from '@discordjs/rest'
-import { Routes } from 'discord-api-types/v9'
-import dotenv from 'dotenv'
+import { SlashCommandBuilder } from '@discordjs/builders';
+import { REST } from '@discordjs/rest';
+import { Routes } from 'discord-api-types/v10';
+import dotenv from 'dotenv';
 
-dotenv.config()
+dotenv.config();
 
 const commands = [
   new SlashCommandBuilder()
@@ -13,7 +13,7 @@ const commands = [
       user
         .setName('user')
         .setDescription('Please select user to disconnect.')
-        .setRequired(true)
+        .setRequired(true),
     ),
   new SlashCommandBuilder()
     .setName('mute')
@@ -22,7 +22,7 @@ const commands = [
       user
         .setName('user')
         .setDescription('Please select user to mute.')
-        .setRequired(true)
+        .setRequired(true),
     ),
   new SlashCommandBuilder()
     .setName('unmute')
@@ -31,7 +31,7 @@ const commands = [
       user
         .setName('user')
         .setDescription('Please select user to unmute.')
-        .setRequired(true)
+        .setRequired(true),
     ),
   new SlashCommandBuilder()
     .setName('deafen')
@@ -40,7 +40,7 @@ const commands = [
       user
         .setName('user')
         .setDescription('Please select user to deafen.')
-        .setRequired(true)
+        .setRequired(true),
     ),
   new SlashCommandBuilder()
     .setName('undeafen')
@@ -49,21 +49,21 @@ const commands = [
       user
         .setName('user')
         .setDescription('Please select user to undeafen.')
-        .setRequired(true)
-    )
-].map((command) => command.toJSON())
+        .setRequired(true),
+    ),
+].map((command) => command.toJSON());
 
-const rest = new REST({ version: '9' }).setToken(
-  process.env.DISCORDJS_BOT_TOKEN
-)
+const rest = new REST({ version: '10' }).setToken(
+  process.env.DISCORDJS_BOT_TOKEN as string,
+);
 
 rest
   .put(
     Routes.applicationGuildCommands(
-      process.env.DISCORDJS_BOT_CLIENT_ID,
-      process.env.DISCORDJS_BOT_GUILD_ID
+      process.env.DISCORDJS_BOT_CLIENT_ID as string,
+      process.env.DISCORDJS_BOT_GUILD_ID as string,
     ),
-    { body: commands }
+    { body: commands },
   )
   .then(() => console.log('Successfully registered application commands.'))
-  .catch(console.error)
+  .catch(console.error);
