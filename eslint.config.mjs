@@ -8,16 +8,16 @@ export default tseslint.config(
   eslintConfigPrettier,
   {
     ignores: [
-      "**/dist/",
-      "**/node_modules/",
-      "**/*.min.js",
-      "**/*.bundle.js",
-      "**/coverage/",
-      "**/jest.config.js",
-      "**/prettier.config.js",
-      "**/.DS_Store",
-      "eslint.config.mjs"
-    ]
+      '**/dist/',
+      '**/node_modules/',
+      '**/*.min.js',
+      '**/*.bundle.js',
+      '**/coverage/',
+      '**/jest.config.js',
+      '**/prettier.config.js',
+      '**/.DS_Store',
+      'eslint.config.mjs',
+    ],
   },
   {
     files: ['src/**/*.ts'],
@@ -35,5 +35,5 @@ export default tseslint.config(
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
     },
-  }
+  },
 );
