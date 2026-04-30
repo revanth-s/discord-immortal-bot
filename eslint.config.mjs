@@ -111,6 +111,7 @@ export default [
         "space-infix-ops": "error",
         "space-unary-ops": "error",
         "spaced-comment": "error",
+        "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
         yoda: "error",
     },
 }];
