@@ -12,10 +12,7 @@ export const command: Command = {
     .setName('disconnect')
     .setDescription('Disconnect a user from voice channel.')
     .addUserOption((user) =>
-      user
-        .setName('user')
-        .setDescription('Please select user to disconnect.')
-        .setRequired(true),
+      user.setName('user').setDescription('Please select user to disconnect.').setRequired(true),
     )
     .toJSON(),
   async execute(interaction: ChatInputCommandInteraction) {
@@ -26,22 +23,13 @@ export const command: Command = {
       return;
     }
 
-    if (
-      !hasPermission(
-        interaction,
-        'disconnect',
-        user,
-        PermissionFlagsBits.Administrator,
-      )
-    ) {
+    if (!hasPermission(interaction, 'disconnect', user, PermissionFlagsBits.Administrator)) {
       return;
     }
     if (!isConnected(interaction, 'disconnect', user)) return;
 
     await user.voice.disconnect();
-    await interaction.reply(
-      `${user} has been disconnected from the voice channel.`,
-    );
+    await interaction.reply(`${user} has been disconnected from the voice channel.`);
 
     const member = interaction.member as GuildMember;
     actionLog(

@@ -49,8 +49,7 @@ const loadCommands = async () => {
       const { command } = await import(`file://${filePath}`);
       if ('data' in command && 'execute' in command) {
         client.commands.set(command.data.name, command);
-      }
-      else {
+      } else {
         logger.warn(
           `The command at ${filePath} is missing a required "data" or "execute" property.`,
         );
@@ -75,16 +74,14 @@ client.on('interactionCreate', async (interaction) => {
 
   try {
     await command.execute(interaction);
-  }
-  catch (error) {
+  } catch (error) {
     logger.error(error);
     if (interaction.replied || interaction.deferred) {
       await interaction.followUp({
         content: 'There was an error while executing this command!',
         ephemeral: true,
       });
-    }
-    else {
+    } else {
       await interaction.reply({
         content: 'There was an error while executing this command!',
         ephemeral: true,

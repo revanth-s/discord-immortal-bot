@@ -12,10 +12,7 @@ export const command: Command = {
     .setName('mute')
     .setDescription('Mute a user from voice channel.')
     .addUserOption((user) =>
-      user
-        .setName('user')
-        .setDescription('Please select user to mute.')
-        .setRequired(true),
+      user.setName('user').setDescription('Please select user to mute.').setRequired(true),
     )
     .toJSON(),
   async execute(interaction: ChatInputCommandInteraction) {
@@ -26,9 +23,7 @@ export const command: Command = {
       return;
     }
 
-    if (
-      !hasPermission(interaction, 'mute', user, PermissionFlagsBits.MuteMembers)
-    ) {
+    if (!hasPermission(interaction, 'mute', user, PermissionFlagsBits.MuteMembers)) {
       return;
     }
     if (!isConnected(interaction, 'mute', user)) return;
@@ -45,16 +40,9 @@ export const command: Command = {
         member.displayName,
         user.guild.name,
       );
-    }
-    else {
+    } else {
       await interaction.reply(`${user} is already muted.`);
-      actionLog(
-        'mute',
-        user.displayName,
-        'is already muted',
-        member.displayName,
-        user.guild.name,
-      );
+      actionLog('mute', user.displayName, 'is already muted', member.displayName, user.guild.name);
     }
   },
 };

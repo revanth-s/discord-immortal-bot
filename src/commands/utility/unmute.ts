@@ -12,10 +12,7 @@ export const command: Command = {
     .setName('unmute')
     .setDescription('Unmute a user from voice channel.')
     .addUserOption((user) =>
-      user
-        .setName('user')
-        .setDescription('Please select user to unmute.')
-        .setRequired(true),
+      user.setName('user').setDescription('Please select user to unmute.').setRequired(true),
     )
     .toJSON(),
   async execute(interaction: ChatInputCommandInteraction) {
@@ -26,14 +23,7 @@ export const command: Command = {
       return;
     }
 
-    if (
-      !hasPermission(
-        interaction,
-        'unmute',
-        user,
-        PermissionFlagsBits.MuteMembers,
-      )
-    ) {
+    if (!hasPermission(interaction, 'unmute', user, PermissionFlagsBits.MuteMembers)) {
       return;
     }
     if (!isConnected(interaction, 'unmute', user)) return;
@@ -42,9 +32,7 @@ export const command: Command = {
 
     if (user.voice.serverMute) {
       await user.voice.setMute(false);
-      await interaction.reply(
-        `${user} has been unmuted from the voice channel.`,
-      );
+      await interaction.reply(`${user} has been unmuted from the voice channel.`);
       actionLog(
         'unmute',
         user.displayName,
@@ -52,8 +40,7 @@ export const command: Command = {
         member.displayName,
         user.guild.name,
       );
-    }
-    else {
+    } else {
       await interaction.reply(`${user} is already unmuted.`);
       actionLog(
         'unmute',

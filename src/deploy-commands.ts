@@ -28,8 +28,7 @@ const loadCommands = async () => {
       const { command } = await import(`file://${filePath}`);
       if ('data' in command && 'execute' in command) {
         commands.push(command.data);
-      }
-      else {
+      } else {
         logger.warn(
           `The command at ${filePath} is missing a required "data" or "execute" property.`,
         );
@@ -41,14 +40,10 @@ const loadCommands = async () => {
 const deploy = async () => {
   await loadCommands();
 
-  const rest = new REST({ version: '10' }).setToken(
-    process.env.DISCORDJS_BOT_TOKEN as string,
-  );
+  const rest = new REST({ version: '10' }).setToken(process.env.DISCORDJS_BOT_TOKEN as string);
 
   try {
-    logger.info(
-      `Started refreshing ${commands.length} application (/) commands.`,
-    );
+    logger.info(`Started refreshing ${commands.length} application (/) commands.`);
 
     // The put method is used to fully refresh all commands in the guild with the current set
     await rest.put(
@@ -60,8 +55,7 @@ const deploy = async () => {
     );
 
     logger.info('Successfully reloaded application (/) commands.');
-  }
-  catch (error) {
+  } catch (error) {
     // And of course, make sure you catch and log any errors!
     logger.error(error);
   }

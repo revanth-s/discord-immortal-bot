@@ -1,8 +1,4 @@
-import {
-  ChatInputCommandInteraction,
-  GuildMember,
-  PermissionFlagsBits,
-} from 'discord.js';
+import { ChatInputCommandInteraction, GuildMember, PermissionFlagsBits } from 'discord.js';
 import { logger } from './logger.js';
 
 export const actionLog = (
@@ -12,9 +8,7 @@ export const actionLog = (
   sender: string,
   guild: string,
 ) => {
-  logger.info(
-    `[${commandName}] ${receiver} ${message} | By ${sender} on ${guild}`,
-  );
+  logger.info(`[${commandName}] ${receiver} ${message} | By ${sender} on ${guild}`);
 };
 
 export const hasPermission = (
@@ -38,11 +32,7 @@ export const hasPermission = (
     return false;
   }
 
-  if (
-    !interaction.guild?.members.me?.permissions.has(
-      PermissionFlagsBits.Administrator,
-    )
-  ) {
+  if (!interaction.guild?.members.me?.permissions.has(PermissionFlagsBits.Administrator)) {
     interaction.reply(
       `I do not have permissions to ${commandName} members. You can enable permissions in the server settings.`,
     );

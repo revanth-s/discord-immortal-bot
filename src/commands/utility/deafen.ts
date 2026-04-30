@@ -12,10 +12,7 @@ export const command: Command = {
     .setName('deafen')
     .setDescription('Deafen a user from voice channel.')
     .addUserOption((user) =>
-      user
-        .setName('user')
-        .setDescription('Please select user to deafen.')
-        .setRequired(true),
+      user.setName('user').setDescription('Please select user to deafen.').setRequired(true),
     )
     .toJSON(),
   async execute(interaction: ChatInputCommandInteraction) {
@@ -26,14 +23,7 @@ export const command: Command = {
       return;
     }
 
-    if (
-      !hasPermission(
-        interaction,
-        'deafen',
-        user,
-        PermissionFlagsBits.DeafenMembers,
-      )
-    ) {
+    if (!hasPermission(interaction, 'deafen', user, PermissionFlagsBits.DeafenMembers)) {
       return;
     }
     if (!isConnected(interaction, 'deafen', user)) return;
@@ -42,9 +32,7 @@ export const command: Command = {
 
     if (!user.voice.serverDeaf) {
       await user.voice.setDeaf(true);
-      await interaction.reply(
-        `${user} has been deafened from the voice channel.`,
-      );
+      await interaction.reply(`${user} has been deafened from the voice channel.`);
       actionLog(
         'deafen',
         user.displayName,
@@ -52,8 +40,7 @@ export const command: Command = {
         member.displayName,
         user.guild.name,
       );
-    }
-    else {
+    } else {
       await interaction.reply(`${user} is already deafened.`);
       actionLog(
         'deafen',
