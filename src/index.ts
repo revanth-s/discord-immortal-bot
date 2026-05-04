@@ -25,7 +25,7 @@ class MyClient extends Client {
 const client = new MyClient({
   intents: [
     GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildEmojisAndStickers,
+    GatewayIntentBits.GuildExpressions,
     GatewayIntentBits.GuildVoiceStates,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.GuildMessageReactions,
@@ -33,32 +33,28 @@ const client = new MyClient({
   ],
 });
 
+const commandFolder = path.join(__dirname, 'commands');
+
 // Load Commands dynamically
 const loadCommands = async () => {
-  const foldersPath = path.join(__dirname, 'commands');
-  const commandFolders = fs.readdirSync(foldersPath);
-
-  for (const folder of commandFolders) {
-    const commandsPath = path.join(foldersPath, folder);
-    const commandFiles = fs
-      .readdirSync(commandsPath)
-      .filter((file) => file.endsWith('.ts') || file.endsWith('.js'));
-    for (const file of commandFiles) {
-      const filePath = path.join(commandsPath, file);
-      // use dynamic import with file:// protocol for ES Modules in windows/linux compatibility
-      const { command } = await import(`file://${filePath}`);
-      if ('data' in command && 'execute' in command) {
-        client.commands.set(command.data.name, command);
-      } else {
-        logger.warn(
-          `The command at ${filePath} is missing a required "data" or "execute" property.`,
-        );
-      }
+  // Grab all the command files from the commands directory
+  const commandFiles = fs
+    .readdirSync(commandFolder)
+    .filter((file) => file.endsWith('.ts') || file.endsWith('.js'));
+  // Grab the SlashCommandBuilder#toJSON() output of each command's data for deployment
+  for (const file of commandFiles) {
+    const filePath = path.join(commandFolder, file);
+    // use dynamic import with file:// protocol for ES Modules in windows/linux compatibility
+    const { command } = await import(`file://${filePath}`);
+    if ('data' in command && 'execute' in command) {
+      client.commands.set(command.data.name, command);
+    } else {
+      logger.warn(`The command at ${filePath} is missing a required "data" or "execute" property.`);
     }
   }
 };
 
-client.once('ready', () => {
+client.once('clientReady', () => {
   logger.info(`Logged in as ${chalk.blue(client.user?.username)}`);
 });
 

@@ -4,8 +4,8 @@ import {
   GuildMember,
   PermissionFlagsBits,
 } from 'discord.js';
-import { hasPermission, isConnected, actionLog } from '../../utils/helpers.js';
-import { Command } from '../../types/command.js';
+import { hasPermission, isConnected, actionLog } from '../utils/helpers.js';
+import { Command } from '../types/command.js';
 
 export const command: Command = {
   data: new SlashCommandBuilder()
